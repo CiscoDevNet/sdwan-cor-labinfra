@@ -1,0 +1,142 @@
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+#cloud-config
+vinitparam:
+ - uuid : CSR-BBD516D8-0AD4-4A53-BA09-4FA9CB62259D
+ - org : GCP-Demo-npitaev
+ - vbond : 44.238.253.68
+ - otp : 77f150b93df741dbb3719489e98a90ad
+
+--==BOUNDARY==
+Content-Type: text/cloud-boothook; charset="us-ascii"
+
+#cloud-boothook
+
+hostname Branch4-R1
+!
+system
+ system-ip             10.111.1.11
+ site-id               111
+ organization-name     GCP-Demo-npitaev
+ vbond 44.238.253.68
+!
+!
+vrf definition 10
+ rd 1:10
+ address-family ipv4
+  route-target export 64550:1
+  route-target import 64550:1
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+vrf definition Mgmt-intf
+ description Management
+ rd          1:512
+ address-family ipv4
+  route-target export 1:512
+  route-target import 1:512
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+interface GigabitEthernet1
+ no shutdown
+ vrf forwarding Mgmt-intf
+ ip address dhcp client-id GigabitEthernet1
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+exit
+!
+interface GigabitEthernet2
+ no shut
+ ip address dhcp client-id GigabitEthernet2
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+!
+!
+interface GigabitEthernet3
+ no shut
+!
+!
+interface Tunnel2
+ no shutdown
+ ip unnumbered GigabitEthernet2
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet2
+ no ipv6 redirects
+ tunnel source GigabitEthernet2
+ tunnel mode sdwan
+exit
+!
+!
+sdwan
+ interface GigabitEthernet2
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color default
+   no last-resort-circuit
+   no low-bandwidth-link
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+ appqoe
+  no tcpopt enable
+ !
+ omp      
+  no shutdown
+  send-path-limit  4
+  ecmp-limit       4
+  graceful-restart
+  no as-dot-notation
+  timers
+   holdtime               60
+   advertisement-interval 1
+   graceful-restart-timer 43200
+   eor-timer              300
+  exit
+  address-family ipv4
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+  address-family ipv6
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+ !
+!
+!
+--==BOUNDARY==
