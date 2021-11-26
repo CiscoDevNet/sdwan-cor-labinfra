@@ -1,0 +1,10 @@
+{
+"Hostname": "fw1",
+"AdminPassword": "ChangeThisPassword@123",
+"FirewallMode": "routed",
+"IPv4Mode": "dhcp",
+"ManageLocally":"No",
+"FmcIp": "1.2.3.4",
+"FmcRegKey": "cisco123reg",
+"FmcNatId": "cisco123nat"
+}

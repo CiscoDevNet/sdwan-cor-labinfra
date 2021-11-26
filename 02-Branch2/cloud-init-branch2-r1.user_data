@@ -6,10 +6,10 @@ Content-Type: text/cloud-config; charset="us-ascii"
 
 #cloud-config
 vinitparam:
- - uuid : CSR-E5446A91-5E4C-3E6A-92C3-F01BA4C4627E
- - org : GCP-Demo-npitaev
- - vbond : 44.238.253.68
- - otp : ce4436a3055340a58a82fee720be6f0e
+ - uuid : <UUID from vManage for your SD-WAN Router>
+ - org : <your SD-WAN Org Name>
+ - vbond : <your vBond IP Address>
+ - otp : <your one time token from vManage for this router>
 
 --==BOUNDARY==
 Content-Type: text/cloud-boothook; charset="us-ascii"
@@ -21,8 +21,8 @@ hostname Branch2-R1
 system
  system-ip             10.112.1.11
  site-id               112
- organization-name     GCP-Demo-npitaev
- vbond 44.238.253.68
+ organization-name     <your SD-WAN Org Name>
+ vbond <your vBond IP Address>
 !
 !
 vrf definition 10

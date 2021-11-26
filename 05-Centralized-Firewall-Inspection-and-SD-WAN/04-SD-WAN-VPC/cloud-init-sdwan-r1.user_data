@@ -16,11 +16,11 @@ Content-Type: text/cloud-boothook; charset="us-ascii"
 
 #cloud-boothook
 
-hostname Branch4-R1
+hostname SDWAN-VPC-R1
 !
 system
- system-ip             10.111.1.11
- site-id               111
+ system-ip             10.172.1.11
+ site-id               172
  organization-name     <your SD-WAN Org Name>
  vbond <your vBond IP Address>
 !

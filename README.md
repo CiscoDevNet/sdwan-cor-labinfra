@@ -21,10 +21,15 @@ This is implemented using Linux Traffic Control (tc) capabilities.
 Amazon Web Services (AWS) is used as Cloud Service Provider (CSP) to host both virtual branches. This can easily be changed to Azure or GCP by changing Terraform Providers and adjusting the code.
 CSP choice for branch hosting is not relevant for Cloud onRamp functionality and tests. 
 
+Centralized Firewall Inspection with SD-WAN is a very common design topic. It is implemented in the chapter 05. This section can be used standalone if you are interested only in this topic.
+The implemented solution allows scalable north-south, east-west traffic inspection using Cisco FTDv virtual firewalls and AWS Gateway Load Balancer (GWLB) and shown below.
+![Topology](img3-fw-and-sdwan.png)
+
 Summary:
 - Terraform scripts from this project will create: 
   * two branches with CSR1000v virtual routers and Linux hosts in different AWS regions
   * two cloud-based apps with webserver running on different ports
+  * shared services VPC with Cisco FTDv firewalls interacting with AWS GLWB.
 - Cisco Cloud onRamp automation used after initial Terraform deployment will create:
   * two Catalyst 8000v routers acting as cloud gateways
   * one AWS TGW per region
@@ -44,6 +49,7 @@ Because we run BFD (Bidirectional Forwarding Detection) packets by default every
   * [Post-deployment fine tuning](#post-deployment-fine-tuning)
   * [Creating Branch2](#creating-branch2)
   * [Creating cloud-based Apps](#creating-cloud-based-apps)
+  * [Shared Services VPC with FTDv Firewall](#shared-services-vpc-with-ftdv-firewall)
 - [SD-WAN Cloud onRamp Configuration](#sd-wan-cloud-onramp-configuration)
 - [Authors](#authors)
 
@@ -522,6 +528,22 @@ curl -Os https://downloads.thousandeyes.com/agent/install_thousandeyes.sh
 chmod +x install_thousandeyes.sh
 sudo ./install_thousandeyes.sh -b XXX-Token-XXX
 ```
+
+### Shared Services VPC with FTDv Firewall
+The first two scripts will create two cloud Apps with Web Server running in two different Availability Zones (AZ).
+The third script will create Shared Services VPC with two Cisco FTDv virtual firewall in two different AZs and AWS GWLB load-balancing traffic across two AZs.
+The last script creates SD-WAN VPC with two Catalyst 8000v virtual SD-WAN routers running in two different AZs.
+
+Please note, that Terraform currently (Nov. 2021) does NOT support TGW Connect (GRE) attachments - see details [here](https://github.com/hashicorp/terraform-provider-aws/pull/20780)
+You can connect SD-WAN VPC manually as Connect Attachment to TGW, use [VPN Attachment](https://github.com/terraform-aws-modules/terraform-aws-vpn-gateway/tree/v2.11.0/examples/complete-vpn-connection-transit-gateway) instead or use other tools.
+
+Simplified Packet From Host VPC to SD-WAN: Host VPC -> AWS TGW -> GWLB -> FTDv -> TGW -> SD-WAN
+Returning traffic: SD-WAN -> AWS TGW -> GWLB -> FTDv -> TGW -> Host VPC
+Please see detailed steps for the packet flow in [this AWS blog](https://aws.amazon.com/blogs/networking-and-content-delivery/centralized-inspection-architecture-with-aws-gateway-load-balancer-and-aws-transit-gateway/).
+
+GENEVE protocol is used for load balancing between GWLB and FTDv. FTDv software version 7.1 or later supports GENEVE protocol.
+
+Appliance mode is required for symmetric routing, it will be enabled for the Shared Services VPC attachment to AWS TGW.
 
 
 ## SD-WAN Cloud onRamp Configuration
