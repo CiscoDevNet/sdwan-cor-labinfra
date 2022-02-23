@@ -44,6 +44,7 @@ Because we run BFD (Bidirectional Forwarding Detection) packets by default every
 - [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
   * [Software versions used during creation of this lab](#software-versions-used-during-creation-of-this-lab)
+  * [SD-WAN Controllers](#sd-wan-controllers)
   * [Creating virtual branch infrastructure](#creating-virtual-branch-infrastructure)
   * [Configuring WAN Emulator](#configuring-wan-emulator)
   * [Post-deployment fine tuning](#post-deployment-fine-tuning)
@@ -90,6 +91,26 @@ Please make sure, that your CSP account has enough ressources to spin up needed 
 - C8kv as cloud gateways: 17.05.01prd5
 - Linux for apps and WAN-Emulator: Amazon Linux 2 AMI, kernel version 4.14.219-164.354.amzn2.x86_64
 
+
+### SD-WAN Controllers
+Before you can start any tests with Cisco Cloud onRamp for Multicloud, you will need to have running SD-WAN controllers: vManage, vBond and vSmart.
+Cisco supports two different operations options:
+- on-prem: controllers running in a Data Center for example on ESXi
+- cloud-based: Cisco or MSP cloudops team will create a set of controllers for you.
+
+This lab repo provides Terraform scripts, which will spin up a basic controller environment 
+only if you will have private controllers AMIs shared with you by Cisco.
+Please note, that SD-WAN controller images are currently not available on marketplace.
+Please work with your Cisco Account team if your project requires private AMIs. 
+This can be done for testing only special cases and currently cannot be used for production.
+The main reason is performance and stability considerations - Cisco performs intensive tests with ESXi and for Cloudops-operated controllers,
+defines strict requirements for Hypervisors and underlying hardware. 
+
+The included scripts will create new basic controller installation. 
+Once vManage, vSmart and vBond are up and running, you will need to provide basic configuration: org-id, system IPs, etc.
+Also if own PKI infrastructure is used, you will need to install own certificates.
+Please note, that the current version of scripts is not using cloud-init files like others sections. 
+Please refer to the branch scripts if you need an example for cloud-init Day 0 configuration, which is used during the first VM boot.
 
 
 ### Creating virtual branch infrastructure
