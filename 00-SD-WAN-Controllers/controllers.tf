@@ -25,7 +25,7 @@ resource "aws_subnet" "controllers_subnet-1" {
     map_public_ip_on_launch   = "true" //it makes this a public subnet
     availability_zone         = var.aws_controllers_az
     tags = {
-        Name                  = "{var.bucket_prefix} SD-WAN-Controllers-Subnet-1-vpn512"
+        Name                  = "${var.bucket_prefix} SD-WAN-Controllers-Subnet-1-vpn512"
     }
 }
 
@@ -35,7 +35,7 @@ resource "aws_subnet" "controllers_subnet-2" {
     cidr_block                = var.aws_controllers_subnet-2_cidr
     availability_zone         = var.aws_controllers_az
     tags = {
-        Name                  = "{var.bucket_prefix} SD-WAN-Controllers-Subnet-2-vpn0"
+        Name                  = "${var.bucket_prefix} SD-WAN-Controllers-Subnet-2-vpn0"
     }
 }
 
@@ -45,7 +45,7 @@ resource "aws_subnet" "controllers_subnet-2" {
 resource "aws_internet_gateway" "controllers_igw" {
     vpc_id           = aws_vpc.vpc_controllers.id
     tags = {
-        Name         = "{var.bucket_prefix} Controllers-igw"
+        Name         = "${var.bucket_prefix} Controllers-igw"
     }
 }
 
@@ -61,7 +61,7 @@ resource "aws_route_table" "controllers_vpn512_rt" {
         gateway_id   = aws_internet_gateway.controllers_igw.id
     }
     tags = {
-        Name         = "{var.bucket_prefix} Controllers-VPN512-rt"
+        Name         = "${var.bucket_prefix} Controllers-VPN512-rt"
     }
 } 
 
@@ -73,7 +73,7 @@ resource "aws_route_table" "controllers_vpn0_rt" {
         gateway_id   = aws_internet_gateway.controllers_igw.id
     }
     tags = {
-        Name         = "{var.bucket_prefix} Controllers-VPN0-rt"
+        Name         = "${var.bucket_prefix} Controllers-VPN0-rt"
     }
 } 
 
@@ -150,7 +150,7 @@ resource "aws_security_group" "controllers_vpn512-sg" {
 # You may need to allow additional IP address like Branch Routers or Controllers IP here
 
     tags = {
-        Name = "{var.bucket_prefix} Controllers-VPN512-SG"
+        Name = "${var.bucket_prefix} Controllers-VPN512-SG"
     }
 }
 
@@ -188,7 +188,15 @@ resource "aws_security_group" "controllers_vpn0-sg" {
         protocol     = "tcp"
         cidr_blocks  = [var.https_allow_cidr]
     }    
-    
+ 
+     ingress {
+        from_port    = 22
+        to_port      = 22
+        protocol     = "tcp"        
+        // This means, only Cisco San Jose and RTP VPN Cluster addresses are allowed! 
+        cidr_blocks  = [var.ssh_allow_cidr]
+    }  
+       
     ingress {
         from_port    = 830
         to_port      = 830
@@ -201,7 +209,7 @@ resource "aws_security_group" "controllers_vpn0-sg" {
 
 
     tags = {
-        Name = "{var.bucket_prefix} Controllers-VPN0-SG"
+        Name = "${var.bucket_prefix} Controllers-VPN0-SG"
     }
 }
 
@@ -214,9 +222,9 @@ resource "aws_network_interface" "vmanage_nic1" {
   private_ips        = [var.aws_vmanage-subnet-1_private_ip]
   security_groups    = [aws_security_group.controllers_vpn512-sg.id]
   source_dest_check  = false
-  description = "{var.bucket_prefix} vManage-NIC1-VPN512"
+  description = "${var.bucket_prefix} vManage-NIC1-VPN512"
   tags  = {
-    Name             = "{var.bucket_prefix} vManage-NIC1-VPN512"
+    Name             = "${var.bucket_prefix} vManage-NIC1-VPN512"
   }
 }
 
@@ -225,9 +233,9 @@ resource "aws_network_interface" "vmanage_nic2" {
   private_ips        = [var.aws_vmanage-subnet-2_private_ip]
   security_groups    = [aws_security_group.controllers_vpn0-sg.id]
   source_dest_check  = false
-  description = "{var.bucket_prefix} vManage-NIC2-VPN0"
+  description = "${var.bucket_prefix} vManage-NIC2-VPN0"
   tags  = {
-    Name             = "{var.bucket_prefix} vManage-NIC2-VPN0"
+    Name             = "${var.bucket_prefix} vManage-NIC2-VPN0"
   }
 }
 
@@ -237,9 +245,9 @@ resource "aws_network_interface" "vbond_nic1" {
   private_ips        = [var.aws_vbond-subnet-1_private_ip]
   security_groups    = [aws_security_group.controllers_vpn512-sg.id]
   source_dest_check  = false
-  description        = "{var.bucket_prefix} vBond-NIC1-VPN512"
+  description        = "${var.bucket_prefix} vBond-NIC1-VPN512"
   tags  = {
-    Name             = "{var.bucket_prefix} vBond-NIC1-VPN512"
+    Name             = "${var.bucket_prefix} vBond-NIC1-VPN512"
   }
 }
 
@@ -248,9 +256,9 @@ resource "aws_network_interface" "vbond_nic2" {
   private_ips        = [var.aws_vbond-subnet-2_private_ip]
   security_groups    = [aws_security_group.controllers_vpn0-sg.id]
   source_dest_check  = false
-  description        = "{var.bucket_prefix} vBond-NIC2-VPN0"
+  description        = "${var.bucket_prefix} vBond-NIC2-VPN0"
   tags  = {
-    Name             = "{var.bucket_prefix} vBond-NIC2-VPN0"
+    Name             = "${var.bucket_prefix} vBond-NIC2-VPN0"
   }
 }
 
@@ -260,9 +268,9 @@ resource "aws_network_interface" "vsmart_nic1" {
   private_ips        = [var.aws_vsmart-subnet-1_private_ip]
   security_groups    = [aws_security_group.controllers_vpn512-sg.id]
   source_dest_check  = false
-  description        = "{var.bucket_prefix} vSmart-NIC1-VPN512"
+  description        = "${var.bucket_prefix} vSmart-NIC1-VPN512"
   tags  = {
-    Name             = "{var.bucket_prefix} vSmart-NIC1-VPN512"
+    Name             = "${var.bucket_prefix} vSmart-NIC1-VPN512"
   }
 }
 
@@ -271,9 +279,9 @@ resource "aws_network_interface" "vsmart_nic2" {
   private_ips        = [var.aws_vsmart-subnet-2_private_ip]
   security_groups    = [aws_security_group.controllers_vpn0-sg.id]
   source_dest_check  = false
-  description        = "{var.bucket_prefix} vSmart-NIC2-VPN0"
+  description        = "${var.bucket_prefix} vSmart-NIC2-VPN0"
   tags  = {
-    Name             = "{var.bucket_prefix} vSmart-NIC2-VPN0"
+    Name             = "${var.bucket_prefix} vSmart-NIC2-VPN0"
   }
 }
 
@@ -300,7 +308,7 @@ resource "aws_instance" "controllers_vmanage" {
   }
 
   tags  = {
-    Name             = "{var.bucket_prefix} vManage"
+    Name             = "${var.bucket_prefix} vManage"
   }
 
 }
@@ -325,7 +333,7 @@ resource "aws_instance" "controllers_vbond" {
   }
 
   tags = {
-    Name             = "{var.bucket_prefix} vBond"
+    Name             = "${var.bucket_prefix} vBond"
   }
 
 }
@@ -350,7 +358,7 @@ resource "aws_instance" "controllers_vsmart" {
   }
 
   tags = {
-    Name = "{var.bucket_prefix} vSmart"
+    Name = "${var.bucket_prefix} vSmart"
   }
 }
 
@@ -362,7 +370,7 @@ resource "aws_eip" "vmanage_nic1_eip_vpn512" {
   network_interface         = aws_network_interface.vmanage_nic1.id
   associate_with_private_ip = var.aws_vmanage-subnet-1_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vManage-vpn512-EIP"
+    Name = "${var.bucket_prefix} vManage-vpn512-EIP"
   }
 }
 
@@ -371,7 +379,7 @@ resource "aws_eip" "vmanage_nic2_eip_vpn0" {
   network_interface         = aws_network_interface.vmanage_nic2.id
   associate_with_private_ip = var.aws_vmanage-subnet-2_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vManage-vpn0-EIP"
+    Name = "${var.bucket_prefix} vManage-vpn0-EIP"
   }
 }
 
@@ -381,7 +389,7 @@ resource "aws_eip" "vbond_nic1_eip_vpn512" {
   network_interface         = aws_network_interface.vbond_nic1.id
   associate_with_private_ip = var.aws_vbond-subnet-1_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vBond-vpn512-EIP"
+    Name = "${var.bucket_prefix} vBond-vpn512-EIP"
   }
 }
 
@@ -390,7 +398,7 @@ resource "aws_eip" "vbond_nic2_eip_vpn0" {
   network_interface         = aws_network_interface.vbond_nic2.id
   associate_with_private_ip = var.aws_vbond-subnet-2_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vBond-vpn0-EIP"
+    Name = "${var.bucket_prefix} vBond-vpn0-EIP"
   }
 }
 
@@ -400,7 +408,7 @@ resource "aws_eip" "vsmart_nic1_eip_vpn512" {
   network_interface         = aws_network_interface.vsmart_nic1.id
   associate_with_private_ip = var.aws_vsmart-subnet-1_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vSmart-vpn512-EIP"
+    Name = "${var.bucket_prefix} vSmart-vpn512-EIP"
   }
 }
 
@@ -409,6 +417,24 @@ resource "aws_eip" "vsmart_nic2_eip_vpn0" {
   network_interface         = aws_network_interface.vsmart_nic2.id
   associate_with_private_ip = var.aws_vsmart-subnet-2_private_ip
   tags = {
-    Name = "{var.bucket_prefix} vSmart-vpn0-EIP"
+    Name = "${var.bucket_prefix} vSmart-vpn0-EIP"
   }
+}
+
+
+# Create 100 Gig volume for vManage partiton and attach it to vManage
+
+resource "aws_ebs_volume" "vmanage_storage_volume" {
+  availability_zone  =  var.aws_controllers_az
+  size               =  100
+  type               =  "gp2"
+  tags = {
+    Name = "${var.bucket_prefix} vManage Storage Partition"
+  }
+}
+
+resource "aws_volume_attachment" "vmanage_storage_attachment" {
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.vmanage_storage_volume.id
+  instance_id = aws_instance.controllers_vmanage.id
 }
