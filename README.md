@@ -3,6 +3,7 @@
 ## TL;DR Summary
 
 This project creates virtual infrastructure with Terraform on public cloud, which will be used for Cisco SD-WAN Cloud onRamp for Multi-cloud lab.
+Some modules can be used separate from each other. For example Centralized Firewall Design or Multi-Region Fabric use cases can be deployed totally separated.
 
 If you are new to Cisco Cloud onRamp, please visit [Cisco Online Documentation](https://www.cisco.com/c/en/us/solutions/enterprise-networks/sd-wan/cloud-onramp.html) 
 and do the [Sandbox lab](http://cs.co/CoR-Trial) first. The Sandbox offers a possibility to learn the basics and configuration workflow by following step-by-step
@@ -21,21 +22,19 @@ This is implemented using Linux Traffic Control (tc) capabilities.
 Amazon Web Services (AWS) is used as Cloud Service Provider (CSP) to host both virtual branches. This can easily be changed to Azure or GCP by changing Terraform Providers and adjusting the code.
 CSP choice for branch hosting is not relevant for Cloud onRamp functionality and tests. 
 
+____
+
 Centralized Firewall Inspection with SD-WAN is a very common design topic. It is implemented in the chapter 05. This section can be used standalone if you are interested only in this topic.
 The implemented solution allows scalable north-south, east-west traffic inspection using Cisco FTDv virtual firewalls and AWS Gateway Load Balancer (GWLB) and shown below.
 ![Topology](img3-fw-and-sdwan.png)
 
-Summary:
-- Terraform scripts from this project will create: 
-  * two branches with CSR1000v virtual routers and Linux hosts in different AWS regions
-  * two cloud-based apps with webserver running on different ports
-  * shared services VPC with Cisco FTDv firewalls interacting with AWS GLWB.
-- Cisco Cloud onRamp automation used after initial Terraform deployment will create:
-  * two Catalyst 8000v routers acting as cloud gateways
-  * one AWS TGW per region
-  * SD-WAN tunnel over AWS Backbone
-  
-Because we run BFD (Bidirectional Forwarding Detection) packets by default every second over every SD-WAN tunnel, you will have full visibility into AWS backbone in terms of loss, latency and delay.
+____
+
+Cisco SD-WAN Multi-Region Fabric (MRF) provides the ability to segment the SD-WAN overlay into multiple regional networks that operate distinctly from one another, and a central core-region network for managing inter-regional traffic.
+Many customers have at least two Cloud Service Providers (CSP) and would like to use CSP backbone for site-to-site communication between different regions.
+In a flat (non MRF) design without any segmentation a control policy for traffic steering between different sites can be complex and not easy to create. It does not scale well with the number of sites. MRFsolves this problem by splitting the network into different regions.
+Second problem beside complexity is the ask to isolate specific subregions within one particular region. For example, in emergency case all branches within Northern California must be isolated from the rest of the network with one click of a button.
+![Topology](img4-mrf-multicloud.png)
 
 ***
 
@@ -51,6 +50,7 @@ Because we run BFD (Bidirectional Forwarding Detection) packets by default every
   * [Creating Branch2](#creating-branch2)
   * [Creating cloud-based Apps](#creating-cloud-based-apps)
   * [Shared Services VPC with FTDv Firewall](#shared-services-vpc-with-ftdv-firewall)
+  * [Multi-Region Fabric and Multicloud](#multi-region-fabric-and-multicloud)  
 - [SD-WAN Cloud onRamp Configuration](#sd-wan-cloud-onramp-configuration)
 - [Authors](#authors)
 
@@ -65,10 +65,10 @@ Before you begin, please make sure, that the following mandatory criteria are me
 - [x] you have an account and can use at least one of the following CSP: AWS, Azure or GCP
 - [x] you have an existing SD-WAN network with vManage, vBond and vSmart (SD-WAN Controllers) running the following software versions:
   >| CSP   | Controller |
-  | :----: | :----:     |
-  | AWS   |  20.3      |
-  | Azure |  20.4      |  
-  | GCP   |  20.5      |  
+  >| :----: | :----:     |
+  >| AWS   |  20.9      |
+  >| Azure |  20.9      |  
+  >| GCP   |  20.9      |  
 - [x] 4 SD-WAN licenses for Cisco Catalyst 8000v (c8kv) virtual routers acting as cloud gateways. In each CSP region, Cloud onRamp Automation will spin up two c8kv instances.
 - [x] 2 SD-WAN licenses for Cisco CSR1000v virtual routers acting as branch routers.
 
@@ -85,10 +85,10 @@ Please make sure, that your CSP account has enough ressources to spin up needed 
 
 ### Software versions used during creation of this lab
 
-- Terraform v0.14.9, AWS Provider v3.32.0
-- SD-WAN Controllers: 20.5.0
+- Terraform v1.3.7, AWS Provider v4.49.0, Google Provider v4.47.0
+- SD-WAN Controllers: 20.10.0
 - CSR1000v on virtual branches: 17.03.02prd9
-- C8kv as cloud gateways: 17.05.01prd5
+- C8kv as cloud gateways: 17.09.01, 17.10 for MRF with Subregions Use Case
 - Linux for apps and WAN-Emulator: Amazon Linux 2 AMI, kernel version 4.14.219-164.354.amzn2.x86_64
 
 
@@ -550,6 +550,8 @@ chmod +x install_thousandeyes.sh
 sudo ./install_thousandeyes.sh -b XXX-Token-XXX
 ```
 
+____
+
 ### Shared Services VPC with FTDv Firewall
 The first two scripts will create two cloud Apps with Web Server running in two different Availability Zones (AZ).
 The third script will create Shared Services VPC with two Cisco FTDv virtual firewall in two different AZs and AWS GWLB load-balancing traffic across two AZs.
@@ -566,6 +568,107 @@ GENEVE protocol is used for load balancing between GWLB and FTDv. FTDv software 
 
 Appliance mode is required for symmetric routing, it will be enabled for the Shared Services VPC attachment to AWS TGW.
 
+____
+
+### Multi-Region Fabric and Multicloud
+The MRF Multicloud solution described below has the fiollowing benefits:
+   * Simplifies network design by introducing regions like US West or Europe.
+   * Improves scalability
+   * Improves reliability by using two different CSPs
+   * Simplifies control policies for traffic steering
+   * Subregions provide another granularity level for control and isolation
+
+Summary of the deployment steps 
+1. Use Terraform scripts to deploy the topology shown above.
+2. Make sure, that your Controllers and SD-WAN routers are running 20.10 / 17.10 Software
+3. Configure MRF - refer to [this CCO Config Guide](https://www.cisco.com/c/en/us/td/docs/routers/sdwan/configuration/hierarchical-sdwan/hierarchical-sdwan-guide/h-sd-wan-basics.html). In a nutshell, you will need to configure the following:
+  * Correct Region and Subregion on the Edge routers
+  * Regional vSmart serving both regions
+  * Enable MRF on vManage and create regions 1 and 2 in the Network Hierarchy Manager.
+
+Use Case 1: Redundancy / Load Balancing
+The following requirements will be met:
+* Subregion 1 (SJ) uses by default San Francisco Border Router
+* Subregion 2 (San Diego) uses Los Angeles Border Router
+* In case of a single backbone failure -> auto failover
+
+Border Router for San Francisco will be configured with Region 1 and Subregion 2 as shown below:
+```
+system
+ system-ip             101.1.1.1
+ site-id               101
+ region 1
+  subregion 1
+ !
+ role                  border-router
+ organization-name     mrf-multicloud-demo
+ vbond 44.227.177.103
+!
+```
+Border Router in Los Angeles will be placed in the Subregion 2:
+```
+system
+ system-ip             103.1.1.1
+ site-id               103
+ region 1
+  subregion 2
+ !
+ role                  border-router
+ organization-name     mrf-multicloud-demo
+ vbond 44.227.177.103
+!
+```
+
+In normal case an edge router in San Jose (Subregion 1) will have the following entry for an IP address of the Region 2:
+```
+Reg1-Sub1-ER1#sh ip ro vrf 10
+...
+m        10.211.1.11 [251/0] via 101.1.1.1, 06:58:01, Sdwan-system-intf
+...
+Reg1-Sub1-ER1#
+```
+
+In case of San Francisco Border Router outage, the route will be replaced with the next hop of the Los Angeles BR:
+```
+Reg1-Sub1-ER1#sh ip ro vrf 10
+...
+m        10.211.1.11 [251/0] via 103.1.1.1, 06:58:01, Sdwan-system-intf
+...
+Reg1-Sub1-ER1#
+```
+Use Case 2: Isolate a subregion with a simple control policy
+A centralized control policy will be used for on-demand isolation of one Subregion from the rest of the network:
+```
+policy
+ control-policy block-reg1-sub1
+  sequence 1
+   match route
+    region-enhanced region 1
+    region-enhanced subregion 1
+   !
+   action reject
+   !
+  !
+  sequence 2
+   match tloc
+    region-enhanced region 1
+    region-enhanced subregion 1
+   !
+   action reject
+   !
+  !
+  default-action accept
+ !
+!
+apply-policy
+ region 1
+  role border-router
+  control-policy block-reg1-sub1 out
+ !
+!
+```
+
+____
 
 ## SD-WAN Cloud onRamp Configuration
 

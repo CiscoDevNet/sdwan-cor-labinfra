@@ -1,0 +1,147 @@
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+#cloud-config
+vinitparam:
+ - uuid : C8K-58106A81-7160-402E-FDA6-83C5B09577BD
+ - otp : 7f76c8e5d3524f609c48e39c13f68af1
+ - vbond : 44.227.177.103
+ - org : mrf-multicloud-demo
+
+--==BOUNDARY==
+Content-Type: text/cloud-boothook; charset="us-ascii"
+
+#cloud-boothook
+
+hostname Core-East-GCP-BR1
+!
+username admin privilege 15 password Cisco123#
+!
+ntp server 169.254.169.123
+!
+system
+ system-ip             104.1.1.1
+ site-id               104
+ organization-name     "mrf-multicloud-demo"
+ sp-organization-name  "mrf-multicloud-demo"
+ vbond 44.227.177.103 port 12346
+!
+vrf definition 10
+ rd 1:10
+ address-family ipv4
+  route-target export 64550:1
+  route-target import 64550:1
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+vrf definition Mgmt-intf
+ description Management
+ rd          1:512
+ address-family ipv4
+  route-target export 1:512
+  route-target import 1:512
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+interface GigabitEthernet1
+ description   TRANSPORT - INET
+ ip address dhcp
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description   TRANSPORT - CORE
+ ip address dhcp
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface Tunnel1
+ ip unnumbered GigabitEthernet1
+ tunnel source GigabitEthernet1
+ tunnel mode sdwan
+!
+interface Tunnel2
+ ip unnumbered GigabitEthernet2
+ tunnel source GigabitEthernet2
+ tunnel mode sdwan
+!
+interface Loopback10
+ no shutdown
+ vrf forwarding 10
+ ip address 10.104.1.11 255.255.255.255
+!
+sdwan
+ interface GigabitEthernet1
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color public-internet
+   no last-resort-circuit
+   no low-bandwidth-link
+   max-control-connections       2
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+ interface GigabitEthernet2
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color private2 restrict
+   no last-resort-circuit
+   no low-bandwidth-link
+   max-control-connections       0
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+!
+line vty 0 4
+ transport input ssh
+!
+--==BOUNDARY==

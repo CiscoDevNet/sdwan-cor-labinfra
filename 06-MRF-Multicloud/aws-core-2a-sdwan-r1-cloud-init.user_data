@@ -1,0 +1,188 @@
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+#cloud-config
+vinitparam:
+ - otp : e5bf369aea56432488367d700cdc1956
+ - vbond : 44.227.177.103
+ - org : mrf-multicloud-demo
+ - uuid : C8K-0BFD0646-55A9-DA40-BE21-B70BADD184FE
+
+--==BOUNDARY==
+Content-Type: text/cloud-boothook; charset="us-ascii"
+
+#cloud-boothook
+
+hostname Core-East-AWS-BR1
+!
+username adminuser privilege 15 secret 9 $14$TCb8$6ue4SRg7Km1YVU$Wk8NIGjd.5r0Uap3NBckoiCWE3O/KbU/B4LfZGgKaME
+username npitaev privilege 15 secret 9 $14$7jZw$gU7w9XsLqhm50U$lW.NfvcSzZwuDi3vwjQLJMwKHTy/t69EzFeqs46LdRo
+!
+system
+ system-ip             102.1.1.1
+ site-id               102
+ organization-name     mrf-multicloud-demo
+ vbond 44.227.177.103
+!
+!
+vrf definition 10
+ rd 1:10
+ address-family ipv4
+  route-target export 64550:1
+  route-target import 64550:1
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+vrf definition Mgmt-intf
+ description Management
+ rd          1:512
+ address-family ipv4
+  route-target export 1:512
+  route-target import 1:512
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+interface GigabitEthernet1
+ no shutdown
+ vrf forwarding Mgmt-intf
+ ip address dhcp client-id GigabitEthernet1
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+exit
+!
+interface GigabitEthernet2
+ no shut
+ ip address dhcp client-id GigabitEthernet2
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+!
+interface GigabitEthernet3
+ no shut
+ ip address dhcp 
+!
+interface Loopback10
+ no shutdown
+ vrf forwarding 10
+ ip address 10.102.1.11 255.255.255.255
+!
+interface Tunnel2
+ no shutdown
+ ip unnumbered GigabitEthernet2
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet2
+ no ipv6 redirects
+ tunnel source GigabitEthernet2
+ tunnel mode sdwan
+exit
+!
+interface Tunnel3
+ no shutdown
+ ip unnumbered GigabitEthernet3
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet3
+ no ipv6 redirects
+ tunnel source GigabitEthernet3
+ tunnel mode sdwan
+exit
+!
+sdwan
+ interface GigabitEthernet2
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color public-internet restrict
+   no last-resort-circuit
+   no low-bandwidth-link
+   max-control-connections       2
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+  interface GigabitEthernet3
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color private1 restrict
+   no last-resort-circuit
+   no low-bandwidth-link
+   max-control-connections       0
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+ appqoe
+  no tcpopt enable
+ !
+ omp      
+  no shutdown
+  send-path-limit  4
+  ecmp-limit       4
+  graceful-restart
+  no as-dot-notation
+  timers
+   holdtime               60
+   advertisement-interval 1
+   graceful-restart-timer 43200
+   eor-timer              300
+  exit
+  address-family ipv4
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+  address-family ipv6
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+ !
+!
+!
+--==BOUNDARY==

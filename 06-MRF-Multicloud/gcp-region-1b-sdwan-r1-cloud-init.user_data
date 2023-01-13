@@ -1,0 +1,151 @@
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+
+--==BOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+#cloud-config
+vinitparam:
+ - otp : 835411f466934c2dadbc739ab234714d
+ - vbond : 44.227.177.103
+ - org : mrf-multicloud-demo
+ - uuid : C8K-7E9DFD60-D49C-140A-D17C-9E787BAABBC6
+
+--==BOUNDARY==
+Content-Type: text/cloud-boothook; charset="us-ascii"
+
+#cloud-boothook
+
+hostname Reg1-Sub2-ER1
+!
+username admin privilege 15 password Cisco123#
+!
+system
+ system-ip             21.1.1.1
+ site-id               21
+ organization-name     mrf-multicloud-demo
+ vbond 44.227.177.103
+ region 1
+!
+!
+vrf definition 10
+ rd 1:10
+ address-family ipv4
+  route-target export 64550:1
+  route-target import 64550:1
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+vrf definition Mgmt-intf
+ description Management
+ rd          1:512
+ address-family ipv4
+  route-target export 1:512
+  route-target import 1:512
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+interface GigabitEthernet1
+ no shutdown
+ vrf forwarding Mgmt-intf
+ ip address dhcp client-id GigabitEthernet1
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+exit
+!
+interface GigabitEthernet2
+ no shut
+ ip address dhcp client-id GigabitEthernet2
+ ip dhcp client default-router distance 1
+ ip mtu    1500
+ mtu           1500
+ negotiation auto
+!
+interface GigabitEthernet3
+ no shut
+ ip address dhcp 
+!
+interface Loopback10
+ no shutdown
+ vrf forwarding 10
+ ip address 10.21.1.11 255.255.255.255
+!
+ip route 0.0.0.0 0.0.0.0 10.21.2.1
+!
+interface Tunnel2
+ no shutdown
+ ip unnumbered GigabitEthernet2
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet2
+ no ipv6 redirects
+ tunnel source GigabitEthernet2
+ tunnel mode sdwan
+exit
+!
+sdwan
+ interface GigabitEthernet2
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color public-internet
+   no last-resort-circuit
+   no low-bandwidth-link
+   max-control-connections       2
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   allow-service all
+   no allow-service bgp
+   allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+  exit
+ exit
+ appqoe
+  no tcpopt enable
+ !
+ omp      
+  no shutdown
+  send-path-limit  4
+  ecmp-limit       4
+  graceful-restart
+  no as-dot-notation
+  timers
+   holdtime               60
+   advertisement-interval 1
+   graceful-restart-timer 43200
+   eor-timer              300
+  exit
+  address-family ipv4
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+  address-family ipv6
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+ !
+!
+!
+--==BOUNDARY==
