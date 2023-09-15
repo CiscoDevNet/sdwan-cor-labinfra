@@ -2,7 +2,7 @@
 # Please note, that controller images are not generally available on Marketplace. 
 # In very special cases images can be shared with customers. You need to ask your Cisco account team for details.
 # In such cases customers are fully responsible for controller operations because this is NOT currently Cisco-supported modus operandi.
-
+# After initial install vManage will format data partition upon first login and reboot.
 
 # Create VPCs:
 
@@ -293,7 +293,12 @@ resource "aws_instance" "controllers_vmanage" {
   ami                = var.aws_ami_id_vmanage
   instance_type      = var.aws_ami_type_vmanage
   key_name           = var.aws_key_pair_name
-  availability_zone  =  var.aws_controllers_az
+  availability_zone  = var.aws_controllers_az
+  user_data  		 = file("vmanage-cloud-init.user_data")
+  # Please note, that user_data file does NOT have variables,
+  # so, adjust IP addresses and other parameters as needed directly in that file!
+  # Cisco internal HowTo for controller cloud-init files: 
+  # https://techzone.cisco.com/t5/Viptela/Configure-Cloud-Init-Bootstrap-for-SD-WAN-Controllers-Onboarding/ta-p/1739744
 
   network_interface {
     device_index            = 0
@@ -313,12 +318,34 @@ resource "aws_instance" "controllers_vmanage" {
 
 }
 
+# Create 200 Gig volume for vManage partiton and attach it to vManage
+
+resource "aws_ebs_volume" "vmanage_storage_volume" {
+  availability_zone  =  var.aws_controllers_az
+  size               =  200
+  type               =  "gp2"
+  tags = {
+    Name = "${var.bucket_prefix} vManage Storage Partition"
+  }
+}
+
+resource "aws_volume_attachment" "vmanage_storage_attachment" {
+  device_name = "/dev/sdb"
+  volume_id   = aws_ebs_volume.vmanage_storage_volume.id
+  instance_id = aws_instance.controllers_vmanage.id
+}
+
 
 resource "aws_instance" "controllers_vbond" {
   ami                = var.aws_ami_id_vbond
   instance_type      = var.aws_ami_type_vbond
   key_name           = var.aws_key_pair_name
-  availability_zone  =  var.aws_controllers_az
+  availability_zone  = var.aws_controllers_az
+  user_data  		 = file("vbond-cloud-init.user_data")
+  # Please note, that user_data file does NOT have variables,
+  # so, adjust IP addresses and other parameters as needed directly in that file!
+  # Cisco internal HowTo for controller cloud-init files: 
+  # https://techzone.cisco.com/t5/Viptela/Configure-Cloud-Init-Bootstrap-for-SD-WAN-Controllers-Onboarding/ta-p/1739744
 
   network_interface {
     device_index            = 0
@@ -343,7 +370,12 @@ resource "aws_instance" "controllers_vsmart" {
   ami                = var.aws_ami_id_vsmart
   instance_type      = var.aws_ami_type_vsmart
   key_name           = var.aws_key_pair_name
-  availability_zone  =  var.aws_controllers_az
+  availability_zone  = var.aws_controllers_az
+  user_data  		 = file("vsmart-cloud-init.user_data")
+  # Please note, that user_data file does NOT have variables,
+  # so, adjust IP addresses and other parameters as needed directly in that file!
+  # Cisco internal HowTo for controller cloud-init files: 
+  # https://techzone.cisco.com/t5/Viptela/Configure-Cloud-Init-Bootstrap-for-SD-WAN-Controllers-Onboarding/ta-p/1739744
 
   network_interface {
     device_index            = 0
@@ -366,7 +398,8 @@ resource "aws_instance" "controllers_vsmart" {
 # Allocate and assign public IP addresses to VPN512 and VPN0 interfaces for SD-WAN controllers
 
 resource "aws_eip" "vmanage_nic1_eip_vpn512" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vmanage_nic1.id
   associate_with_private_ip = var.aws_vmanage-subnet-1_private_ip
   tags = {
@@ -375,7 +408,8 @@ resource "aws_eip" "vmanage_nic1_eip_vpn512" {
 }
 
 resource "aws_eip" "vmanage_nic2_eip_vpn0" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vmanage_nic2.id
   associate_with_private_ip = var.aws_vmanage-subnet-2_private_ip
   tags = {
@@ -385,7 +419,8 @@ resource "aws_eip" "vmanage_nic2_eip_vpn0" {
 
 
 resource "aws_eip" "vbond_nic1_eip_vpn512" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vbond_nic1.id
   associate_with_private_ip = var.aws_vbond-subnet-1_private_ip
   tags = {
@@ -394,7 +429,8 @@ resource "aws_eip" "vbond_nic1_eip_vpn512" {
 }
 
 resource "aws_eip" "vbond_nic2_eip_vpn0" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vbond_nic2.id
   associate_with_private_ip = var.aws_vbond-subnet-2_private_ip
   tags = {
@@ -404,7 +440,8 @@ resource "aws_eip" "vbond_nic2_eip_vpn0" {
 
 
 resource "aws_eip" "vsmart_nic1_eip_vpn512" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vsmart_nic1.id
   associate_with_private_ip = var.aws_vsmart-subnet-1_private_ip
   tags = {
@@ -413,28 +450,11 @@ resource "aws_eip" "vsmart_nic1_eip_vpn512" {
 }
 
 resource "aws_eip" "vsmart_nic2_eip_vpn0" {
-  vpc                       = true
+#  vpc                       = true
+  domain   					= "vpc"
   network_interface         = aws_network_interface.vsmart_nic2.id
   associate_with_private_ip = var.aws_vsmart-subnet-2_private_ip
   tags = {
     Name = "${var.bucket_prefix} vSmart-vpn0-EIP"
   }
-}
-
-
-# Create 100 Gig volume for vManage partiton and attach it to vManage
-
-resource "aws_ebs_volume" "vmanage_storage_volume" {
-  availability_zone  =  var.aws_controllers_az
-  size               =  100
-  type               =  "gp2"
-  tags = {
-    Name = "${var.bucket_prefix} vManage Storage Partition"
-  }
-}
-
-resource "aws_volume_attachment" "vmanage_storage_attachment" {
-  device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.vmanage_storage_volume.id
-  instance_id = aws_instance.controllers_vmanage.id
 }

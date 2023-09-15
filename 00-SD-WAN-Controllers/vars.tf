@@ -9,31 +9,31 @@ variable "aws_controllers_az" {
 }
 
 variable "bucket_prefix" {            # use this a prefix in descriptions of ressources, which will be prepended to the name of all ressources. Example "Demo Branch1 Subnet-1 Mgmt"
-    default = "Test1"
+    default = "Test5"
 }
 
 variable "aws_ami_id_vmanage" {
-  default = "ami-0907a55013449fd0f"   # 20.5 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
+  default = "ami-038a84f798016c28d"   # 20.12 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
 }
 
 variable "aws_ami_type_vmanage" {
-  default = "c5.4xlarge"
+  default = "c7i.4xlarge"
 }
 
 variable "aws_ami_id_vsmart" {
-  default = "ami-080ecf2ae93e1bfe5"   # 20.5 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
+  default = "ami-0d3a38565cad7e9a8"   # 20.12 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
 }
 
 variable "aws_ami_type_vsmart" {
-  default = "t2.medium"
+  default = "t3.medium"               # Changed from t2 to t3 in order to have console access via AWS UI
 }
 
 variable "aws_ami_id_vbond" {
-  default = "ami-0d0c3488a6888849d"   # 20.5 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
+  default = "ami-03bdae9b1edc67cce"   # 20.12 eng. image, available only in us-west-2. Must be shared by Cisco as private AMI.
 }
 
 variable "aws_ami_type_vbond" {
-  default = "t2.medium"
+  default = "t3.medium"               # Changed from t2 to t3 in order to have console access via AWS UI
 }
 
 variable "ssh_allow_cidr" {           # allow ssh only from Cisco San Jose VPN Cluster, adjust as needed!

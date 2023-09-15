@@ -1,0 +1,85 @@
+#cloud-config
+write_files:
+- path: /etc/default/personality
+  content: "vedge\n"
+- path: /etc/default/inited
+  content: "1\n"
+- path: /usr/share/viptela/symantec-root-ca.crt
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <personality>vedge</personality>
+        <device-model>vedge-cloud</device-model>
+        <organization-name>sdwan-tme-demo</organization-name>
+        <sp-organization-name>sdwan-tme-demo</sp-organization-name>
+        <vbond>
+          <local></local>
+          <remote>44.227.177.103</remote>
+          <port>12346</port>
+        </vbond>
+        <site-id>210</site-id>
+        <system-ip>11.210.11.12</system-ip>
+        <host-name>vBond</host-name>
+        <domain-id>1</domain-id>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>SJC24-tme</password>
+            <group>netadmin</group>
+          </user>
+        </aaa>
+      </system>
+      <vpn xmlns="http://viptela.com/vpn">
+        <vpn-instance>
+          <vpn-id>0</vpn-id>
+          <ip>
+            <route>
+              <prefix>0.0.0.0/0</prefix>
+              <next-hop>
+                <address>10.201.2.1</address>
+              </next-hop>
+            </route>
+          </ip>
+          <interface>
+            <if-name>ge0/0</if-name>
+            <ip>
+              <address>10.201.2.12/24</address>
+            </ip>
+            <tunnel-interface>
+              <encapsulation>
+                <encap>ipsec</encap>
+              </encapsulation>
+              <color>
+                <value>default</value>
+              </color>
+              <allow-service>
+                <sshd>true</sshd>
+                <netconf>true</netconf>
+              </allow-service>
+            </tunnel-interface>
+            <shutdown>false</shutdown>
+          </interface>
+        </vpn-instance>
+      </vpn>
+      <vpn xmlns="http://viptela.com/vpn">
+        <vpn-instance>
+          <vpn-id>512</vpn-id>
+          <ip>
+            <route>
+              <prefix>0.0.0.0/0</prefix>
+              <next-hop>
+                <address>10.201.1.1</address>
+              </next-hop>
+            </route>
+          </ip>
+          <interface>
+            <if-name>eth0</if-name>
+            <ip>
+              <address>10.201.1.12/24</address>
+            </ip>
+            <shutdown>false</shutdown>
+          </interface>
+        </vpn-instance>
+      </vpn>
+    </config>
