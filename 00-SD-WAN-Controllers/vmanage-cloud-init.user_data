@@ -1,10 +1,17 @@
 #cloud-config
+disk_setup:
+  /dev/nvme1n1:
+    table_type: mbr
+    layout: false
+    overwrite: false
 fs_setup:
-- device: "/dev/sdb"
-  partition: "none"
-  filesystem: "ext4"
+- device: /dev/nvme1n1
+  label: data
+  partition: none
+  filesystem: ext4
+  overwrite: false
 mounts:
-- [ sdb, /opt/data ]
+- [ /dev/nvme1n1, /opt/data ]
 write_files:
 - path: /opt/web-app/etc/persona
   owner: vmanage:vmanage-admin
@@ -34,7 +41,7 @@ write_files:
         <aaa>
           <user>
             <name>admin</name>
-            <password>SJC24-tme</password>
+            <password>admin123</password>
             <group>netadmin</group>
           </user>
         </aaa>

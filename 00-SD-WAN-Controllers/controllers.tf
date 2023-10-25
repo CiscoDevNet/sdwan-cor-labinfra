@@ -329,6 +329,11 @@ resource "aws_ebs_volume" "vmanage_storage_volume" {
   }
 }
 
+# Please note, that the disk name sdb mentioned below is different from the disk name in the cloud 
+# init file vmanage-cloud-init.user_data - nvme1n1
+# Refer to AWS Doc for more details on that: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html
+# Also please note, that during terraform destroy, it takes a while to detach the volume, so, you may want to force detach manually.
+
 resource "aws_volume_attachment" "vmanage_storage_attachment" {
   device_name = "/dev/sdb"
   volume_id   = aws_ebs_volume.vmanage_storage_volume.id

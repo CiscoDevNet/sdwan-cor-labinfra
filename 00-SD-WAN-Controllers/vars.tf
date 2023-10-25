@@ -9,7 +9,7 @@ variable "aws_controllers_az" {
 }
 
 variable "bucket_prefix" {            # use this a prefix in descriptions of ressources, which will be prepended to the name of all ressources. Example "Demo Branch1 Subnet-1 Mgmt"
-    default = "Test5"
+    default = "Test"
 }
 
 variable "aws_ami_id_vmanage" {
